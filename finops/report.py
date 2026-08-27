@@ -3,7 +3,9 @@ from __future__ import annotations
 
 
 def build_report(baseline_usd: float, optimized_usd: float, levers: dict,
-                 sustainability: dict | None = None, period: str = "monthly") -> str:
+                 sustainability: dict | None = None, period: str = "monthly",
+                 unit_economics: dict | None = None,
+                 analysis_sections: list[str] | None = None) -> str:
     """Return a markdown cost-optimization report."""
     savings = baseline_usd - optimized_usd
     pct = (savings / baseline_usd * 100.0) if baseline_usd > 0 else 0.0
@@ -22,6 +24,17 @@ def build_report(baseline_usd: float, optimized_usd: float, levers: dict,
     ]
     for name, amount in levers.items():
         lines.append(f"| {name} | ${amount:,.0f} |")
+    if unit_economics:
+        lines += [
+            "",
+            "## Inference unit economics",
+            "",
+            "| Metric | Baseline | Optimized | Improvement |",
+            "|---|---:|---:|---:|",
+            f"| $/1M-token | ${unit_economics.get('baseline_per_m', 0):.3f} | "
+            f"${unit_economics.get('optimized_per_m', 0):.3f} | "
+            f"{unit_economics.get('savings_pct', 0):.1f}% |",
+        ]
     if sustainability:
         lines += [
             "",
@@ -31,6 +44,9 @@ def build_report(baseline_usd: float, optimized_usd: float, levers: dict,
             f"- Carbon per query: {sustainability.get('carbon_g', 0):.3f} gCO2e",
             f"- Cheapest+cleanest region: {sustainability.get('best_region', 'n/a')}",
         ]
+    if analysis_sections:
+        for section in analysis_sections:
+            lines += ["", section]
     lines += ["", "_Figures are June-2026 as-of snapshots; re-baseline before acting._"]
     return "\n".join(lines)
 
